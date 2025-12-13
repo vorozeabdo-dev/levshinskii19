@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
-import { NavigationBar } from './components/NavigationBar';
+import { Preloader } from './components/Preloader';
+import { SmoothScrollWrapper } from './components/SmoothScrollWrapper';
+import { NavigationBar } from './components/AppNavigation';
 import { HeroSection } from './components/HeroSection';
 import { IntroductionBlock } from './components/IntroductionBlock';
 import { ArchitectureSection } from './components/ArchitectureSection';
@@ -26,6 +28,7 @@ function App() {
   const [apartments, setApartments] = useState<Apartment[]>(INITIAL_APARTMENTS);
   const [isManagerMode, setIsManagerMode] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isPreloaderVisible, setIsPreloaderVisible] = useState(true);
 
   // Legal Modals State
   const [legalModalOpen, setLegalModalOpen] = useState(false);
@@ -122,90 +125,98 @@ function App() {
         style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}
       />
 
-      <NavigationBar
-        isManagerMode={isManagerMode}
-        toggleManagerMode={() => { }}
-        onContactClick={() => document.getElementById('developer')?.scrollIntoView({ behavior: 'smooth' })}
-      />
+      <AnimatePresence>
+        {isPreloaderVisible && (
+          <Preloader onComplete={() => setIsPreloaderVisible(false)} />
+        )}
+      </AnimatePresence>
 
-      <LayoutGroup>
-        <motion.div layout className="min-h-screen">
-          <AnimatePresence mode="wait">
-            {!isManagerMode ? (
-              <motion.div
-                key="public"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <HeroSection />
-                <IntroductionBlock />
-                <ArchitectureSection />
-                <PresentationSection />
-                <LobbySection />
-                <GlobalGallerySection />
-                <AmenitiesSection />
-                <LocationSection />
+      <SmoothScrollWrapper>
+        <NavigationBar
+          isManagerMode={isManagerMode}
+          toggleManagerMode={() => { }}
+          onContactClick={() => document.getElementById('developer')?.scrollIntoView({ behavior: 'smooth' })}
+        />
 
-                <div id="apartments" className="relative z-10">
-                  <FilterBar filters={filters} setFilters={setFilters} />
-                  <PriceSummary />
-                  <ApartmentGrid
-                    apartments={apartments}
-                    filters={filters}
-                    onApartmentClick={setSelectedApartmentId}
+        <LayoutGroup>
+          <motion.div layout className="min-h-screen">
+            <AnimatePresence mode="wait">
+              {!isManagerMode ? (
+                <motion.div
+                  key="public"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <HeroSection />
+                  <IntroductionBlock />
+                  <ArchitectureSection />
+                  <PresentationSection />
+                  <LobbySection />
+                  <GlobalGallerySection />
+                  <AmenitiesSection />
+                  <LocationSection />
+
+                  <div id="apartments" className="relative z-10">
+                    <FilterBar filters={filters} setFilters={setFilters} />
+                    <PriceSummary />
+                    <ApartmentGrid
+                      apartments={apartments}
+                      filters={filters}
+                      onApartmentClick={setSelectedApartmentId}
+                    />
+                  </div>
+
+                  <PurchaseSection />
+                  <DeveloperSection />
+
+                  <Footer
+                    onOpenPrivacy={() => handleOpenLegal('privacy')}
+                    onOpenAgreement={() => handleOpenLegal('agreement')}
                   />
-                </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="admin"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <AdminPanel
+                    apartments={apartments}
+                    setApartments={setApartments}
+                    updateApartmentStatus={handleStatusChange}
+                    saveChanges={handleSave}
+                    isDirty={isDirty}
+                    onLogout={handleLogout}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </LayoutGroup>
 
-                <PurchaseSection />
-                <DeveloperSection />
+        <ApartmentDetailModal
+          apartment={selectedApartment}
+          onClose={() => setSelectedApartmentId(null)}
+        />
 
-                <Footer
-                  onOpenPrivacy={() => handleOpenLegal('privacy')}
-                  onOpenAgreement={() => handleOpenLegal('agreement')}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="admin"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <AdminPanel
-                  apartments={apartments}
-                  setApartments={setApartments}
-                  updateApartmentStatus={handleStatusChange}
-                  saveChanges={handleSave}
-                  isDirty={isDirty}
-                  onLogout={handleLogout}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </LayoutGroup>
+        <AdminLoginModal
+          isOpen={isAdminLoginOpen}
+          onClose={() => setIsAdminLoginOpen(false)}
+          onLogin={handleAdminLogin}
+        />
 
-      <ApartmentDetailModal
-        apartment={selectedApartment}
-        onClose={() => setSelectedApartmentId(null)}
-      />
+        <LegalModal
+          isOpen={legalModalOpen}
+          onClose={() => setLegalModalOpen(false)}
+          type={legalModalType}
+        />
 
-      <AdminLoginModal
-        isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
-        onLogin={handleAdminLogin}
-      />
-
-      <LegalModal
-        isOpen={legalModalOpen}
-        onClose={() => setLegalModalOpen(false)}
-        type={legalModalType}
-      />
-
-    </div>
+      </SmoothScrollWrapper>
+    </div >
   );
 }
 
